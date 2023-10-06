@@ -1,0 +1,473 @@
+@top Source {
+  terminator? (expression (terminator expression)* terminator?)?
+}
+
+expression {
+  Block |
+  Identifier |
+  Alias |
+  Integer |
+  Float |
+  Char |
+  Boolean |
+  Nil |
+  atom |
+  String |
+  Charlist |
+  Sigil |
+  List |
+  Tuple |
+  Bitstring |
+  Map |
+  nullaryOperator |
+  UnaryOperator |
+  BinaryOperator |
+  Dot |
+  Call |
+  AccessCall |
+  AnonymousFunction
+}
+
+Block {
+  "(" terminator? ((StabClause) (terminator (StabClause))* | (expression) (terminator (expression))* terminator?)? ")"
+}
+
+atom {
+  Atom |
+  QuotedAtom
+}
+
+QuotedAtom {
+  quotedAtomStart (quotedIDouble | quotedISingle)
+}
+
+quotedIDouble {
+  "\"" QuotedContent { quotedContentIDouble }? ((Interpolation | EscapeSequence) QuotedContent { quotedContentIDouble }?)* "\""
+}
+
+quotedDouble {
+  "\"" QuotedContent { quotedContentDouble }? (EscapeSequence QuotedContent { quotedContentDouble }?)* "\""
+}
+
+quotedISingle {
+  "'" QuotedContent { quotedContentISingle }? ((Interpolation | EscapeSequence) QuotedContent { quotedContentISingle }?)* "'"
+}
+
+quotedSingle {
+  "'" QuotedContent { quotedContentSingle }? (EscapeSequence QuotedContent { quotedContentSingle }?)* "'"
+}
+
+quotedIHeredocSingle {
+  "'''" QuotedContent { quotedContentIHeredocSingle }? ((Interpolation | EscapeSequence) QuotedContent { quotedContentIHeredocSingle }?)* "'''"
+}
+
+quotedHeredocSingle {
+  "'''" QuotedContent { quotedContentHeredocSingle }? (EscapeSequence QuotedContent { quotedContentHeredocSingle }?)* "'''"
+}
+
+quotedIHeredocDouble {
+  "\"\"\"" QuotedContent { quotedContentIHeredocDouble }? ((Interpolation | EscapeSequence) QuotedContent { quotedContentIHeredocDouble }?)* "\"\"\""
+}
+
+quotedHeredocDouble {
+  "\"\"\"" QuotedContent { quotedContentHeredocDouble }? (EscapeSequence QuotedContent { quotedContentHeredocDouble }?)* "\"\"\""
+}
+
+quotedIParenthesis {
+  "(" QuotedContent { quotedContentIParenthesis }? ((Interpolation | EscapeSequence) QuotedContent { quotedContentIParenthesis }?)* ")"
+}
+
+quotedParenthesis {
+  "(" QuotedContent { quotedContentParenthesis }? (EscapeSequence QuotedContent { quotedContentParenthesis }?)* ")"
+}
+
+quotedICurly {
+  "{" QuotedContent { quotedContentICurly }? ((Interpolation | EscapeSequence) QuotedContent { quotedContentICurly }?)* "}"
+}
+
+quotedCurly {
+  "{" QuotedContent { quotedContentCurly }? (EscapeSequence QuotedContent { quotedContentCurly }?)* "}"
+}
+
+quotedISquare {
+  "[" QuotedContent { quotedContentISquare }? ((Interpolation | EscapeSequence) QuotedContent { quotedContentISquare }?)* "]"
+}
+
+quotedSquare {
+  "[" QuotedContent { quotedContentSquare }? (EscapeSequence QuotedContent { quotedContentSquare }?)* "]"
+}
+
+quotedIAngle {
+  "<" QuotedContent { quotedContentIAngle }? ((Interpolation | EscapeSequence) QuotedContent { quotedContentIAngle }?)* ">"
+}
+
+quotedAngle {
+  "<" QuotedContent { quotedContentAngle }? (EscapeSequence QuotedContent { quotedContentAngle }?)* ">"
+}
+
+quotedIBar {
+  "|" QuotedContent { quotedContentIBar }? ((Interpolation | EscapeSequence) QuotedContent { quotedContentIBar }?)* "|"
+}
+
+quotedBar {
+  "|" QuotedContent { quotedContentBar }? (EscapeSequence QuotedContent { quotedContentBar }?)* "|"
+}
+
+quotedISlash {
+  "/" QuotedContent { quotedContentISlash }? ((Interpolation | EscapeSequence) QuotedContent { quotedContentISlash }?)* "/"
+}
+
+quotedSlash {
+  "/" QuotedContent { quotedContentSlash }? (EscapeSequence QuotedContent { quotedContentSlash }?)* "/"
+}
+
+String {
+  quotedIDouble |
+  quotedIHeredocDouble
+}
+
+Charlist {
+  quotedISingle |
+  quotedIHeredocSingle
+}
+
+Interpolation {
+  "#{" expression? "}"
+}
+
+Sigil {
+  "~" (SigilName (quotedIDouble | quotedISingle | quotedIHeredocSingle | quotedIHeredocDouble | quotedIParenthesis | quotedICurly | quotedISquare | quotedIAngle | quotedIBar | quotedISlash) | SigilName (quotedDouble | quotedSingle | quotedHeredocSingle | quotedHeredocDouble | quotedParenthesis | quotedCurly | quotedSquare | quotedAngle | quotedBar | quotedSlash)) SigilModifiers?
+}
+
+Keywords /* precedence: right 0 */ {
+  Pair ("," Pair)*
+}
+
+keywordsWithTrailingSeparator {
+  Pair ("," Pair)* ","?
+}
+
+Pair {
+  keyword expression
+}
+
+keyword {
+  Keyword |
+  QuotedKeyword
+}
+
+QuotedKeyword {
+  (quotedIDouble | quotedISingle) token_3
+}
+
+List {
+  "[" itemsWithTrailingSeparator? "]"
+}
+
+Tuple {
+  "{" itemsWithTrailingSeparator? "}"
+}
+
+Bitstring {
+  "<<" itemsWithTrailingSeparator? ">>"
+}
+
+Map /* precedence: 1 */ {
+  "%" Struct? "{" MapContent { itemsWithTrailingSeparator }? "}"
+}
+
+Struct /* precedence: left 0 */ {
+  Alias |
+  atom |
+  Identifier |
+  UnaryOperator |
+  Dot |
+  Call { callWithParentheses }
+}
+
+itemsWithTrailingSeparator {
+  (expression ("," expression)* ","? | (expression ("," expression)* ",")? Keywords { keywordsWithTrailingSeparator })
+}
+
+nullaryOperator {
+  OperatorIdentifier { /* precedence: 160 */ ("..") }
+}
+
+UnaryOperator {
+  /* precedence: dynamic -1 60 */ (beforeUnaryOp? "&" captureExpression) |
+  /* precedence: dynamic -1 200 */ (beforeUnaryOp? ("+" | "-" | "!" | "^" | "~~~" | "not") expression) |
+  /* precedence: dynamic -1 220 */ (beforeUnaryOp? "@" expression) |
+  /* precedence: dynamic -1 235 */ (beforeUnaryOp? "&" Integer)
+}
+
+captureExpression {
+  /* precedence: 1 */ ("(" expression ")") |
+  expression
+}
+
+BinaryOperator {
+  /* precedence: left 10 */ (expression ("<-" | "\\\\") expression) |
+  /* precedence: right 20 */ (expression "when" (expression | Keywords)) |
+  /* precedence: right 30 */ (expression "::" expression) |
+  /* precedence: right 40 */ (expression "|" (expression | Keywords)) |
+  /* precedence: right 50 */ (expression "=>" expression) |
+  /* precedence: right 70 */ (expression "=" expression) |
+  /* precedence: left 80 */ (expression ("||" | "|||" | "or") expression) |
+  /* precedence: left 90 */ (expression ("&&" | "&&&" | "and") expression) |
+  /* precedence: left 100 */ (expression ("==" | "!=" | "=~" | "===" | "!==") expression) |
+  /* precedence: left 110 */ (expression ("<" | ">" | "<=" | ">=") expression) |
+  /* precedence: left 120 */ (expression ("|>" | "<<<" | ">>>" | "<<~" | "~>>" | "<~" | "~>" | "<~>" | "<|>") expression) |
+  /* precedence: left 130 */ (expression ("in" | notIn) expression) |
+  /* precedence: left 140 */ (expression "^^^" expression) |
+  /* precedence: right 150 */ (expression "//" expression) |
+  /* precedence: right 160 */ (expression ("++" | "--" | "+++" | "---" | "<>") expression) |
+  /* precedence: right 160 */ (expression ".." expression) |
+  /* precedence: left 170 */ (expression ("+" | "-") expression) |
+  /* precedence: left 180 */ (expression ("*" | "/") expression) |
+  /* precedence: left 190 */ (expression "**" expression) |
+  /* precedence: left 180 */ (OperatorIdentifier "/" Integer)
+}
+
+OperatorIdentifier {
+  /* precedence: 60 */ ("&") |
+  /* precedence: 200 */ ("+" | "-" | "!" | "^" | "~~~" | "not") |
+  /* precedence: 220 */ ("@") |
+  "<-" |
+  "\\\\" |
+  "when" |
+  "::" |
+  "|" |
+  "=" |
+  "||" |
+  "|||" |
+  "or" |
+  "&&" |
+  "&&&" |
+  "and" |
+  "==" |
+  "!=" |
+  "=~" |
+  "===" |
+  "!==" |
+  "<" |
+  ">" |
+  "<=" |
+  ">=" |
+  "|>" |
+  "<<<" |
+  ">>>" |
+  "<<~" |
+  "~>>" |
+  "<~" |
+  "~>" |
+  "<~>" |
+  "<|>" |
+  "in" |
+  notIn |
+  "^^" |
+  "++" |
+  "--" |
+  "+++" |
+  "---" |
+  "<>" |
+  "*" |
+  "/" |
+  "**" |
+  "->" |
+  "."
+}
+
+Dot /* precedence: 210 */ {
+  expression "." (Alias | Tuple)
+}
+
+Call {
+  callWithoutParentheses |
+  callWithParentheses
+}
+
+callWithoutParentheses {
+  localCallWithoutParentheses |
+  localCallJustDoBlock |
+  remoteCallWithoutParentheses
+}
+
+callWithParentheses {
+  localCallWithParentheses |
+  remoteCallWithParentheses |
+  anonymousCall |
+  doubleCall
+}
+
+localCallWithoutParentheses /* precedence: left 0 */ {
+  Identifier Arguments { callArgumentsWithoutParentheses } (newlineBeforeDo? DoBlock)?
+}
+
+localCallWithParentheses /* precedence: left 0 */ {
+  Identifier Arguments { callArgumentsWithParenthesesImmediate } (newlineBeforeDo? DoBlock)?
+}
+
+localCallJustDoBlock /* precedence: -1 */ {
+  Identifier DoBlock
+}
+
+remoteCallWithoutParentheses /* precedence: left 0 */ {
+  Dot { remoteDot } Arguments { callArgumentsWithoutParentheses }? (newlineBeforeDo? DoBlock)?
+}
+
+remoteCallWithParentheses /* precedence: left 0 */ {
+  Dot { remoteDot } Arguments { callArgumentsWithParenthesesImmediate } (newlineBeforeDo? DoBlock)?
+}
+
+remoteDot /* precedence: 210 */ {
+  expression "." (Identifier | Identifier { "and" | "in" | "not" | "or" | "when" | "true" | "false" | "nil" | "after" | "catch" | "do" | "else" | "end" | "fn" | "rescue" } | OperatorIdentifier | String { quotedIDouble } | Charlist { quotedISingle })
+}
+
+anonymousCall {
+  Dot { anonymousDot } Arguments { callArgumentsWithParentheses }
+}
+
+anonymousDot /* precedence: 210 */ {
+  expression "."
+}
+
+doubleCall /* precedence: left 0 */ {
+  Call { localCallWithParentheses | remoteCallWithParentheses | anonymousCall } Arguments { callArgumentsWithParentheses } (newlineBeforeDo? DoBlock)?
+}
+
+callArgumentsWithParentheses {
+  "(" callArgumentsWithTrailingSeparator? ")"
+}
+
+callArgumentsWithParenthesesImmediate {
+  "(" callArgumentsWithTrailingSeparator? ")"
+}
+
+callArgumentsWithTrailingSeparator {
+  expression ("," expression)* ("," Keywords { keywordsWithTrailingSeparator })? |
+  Keywords { keywordsWithTrailingSeparator }
+}
+
+callArgumentsWithoutParentheses /* precedence: dynamic -1 right 0 */ {
+  expression ("," expression)* ("," Keywords)? |
+  Keywords
+}
+
+DoBlock {
+  "do" terminator? ((StabClause) (terminator (StabClause))* | (expression) (terminator (expression))* terminator?)? (AfterBlock | RescueBlock | CatchBlock | ElseBlock)* "end"
+}
+
+AfterBlock {
+  "after" terminator? ((StabClause) (terminator (StabClause))* | (expression) (terminator (expression))* terminator?)?
+}
+
+RescueBlock {
+  "rescue" terminator? ((StabClause) (terminator (StabClause))* | (expression) (terminator (expression))* terminator?)?
+}
+
+CatchBlock {
+  "catch" terminator? ((StabClause) (terminator (StabClause))* | (expression) (terminator (expression))* terminator?)?
+}
+
+ElseBlock {
+  "else" terminator? ((StabClause) (terminator (StabClause))* | (expression) (terminator (expression))* terminator?)?
+}
+
+AccessCall /* precedence: 205 */ {
+  expression "[" expression "]"
+}
+
+StabClause /* precedence: right 0 */ {
+  stabClauseLeft? "->" Body?
+}
+
+stabClauseLeft {
+  Arguments { stabClauseArgumentsWithParentheses } |
+  BinaryOperator { stabClauseArgumentsWithParenthesesWithGuard } |
+  Arguments { stabClauseArgumentsWithoutParentheses } |
+  BinaryOperator { stabClauseArgumentsWithoutParenthesesWithGuard }
+}
+
+stabClauseArgumentsWithParentheses /* precedence: 1 */ {
+  "(" (/* precedence: right 20 */ (expression) ("," /* precedence: right 20 */ (expression))* ("," Keywords)? | Keywords)? ")"
+}
+
+stabClauseArgumentsWithoutParentheses /* precedence: 20 */ {
+  /* precedence: 20 */ (expression) ("," /* precedence: 20 */ (expression))* ("," Keywords)? |
+  Keywords
+}
+
+stabClauseArgumentsWithParenthesesWithGuard {
+  Arguments { stabClauseArgumentsWithParentheses } "when" expression
+}
+
+stabClauseArgumentsWithoutParenthesesWithGuard /* precedence: dynamic 1 */ {
+  Arguments { stabClauseArgumentsWithoutParentheses } "when" expression
+}
+
+Body {
+  terminator |
+  terminator? expression (terminator expression)* terminator?
+}
+
+AnonymousFunction {
+  "fn" terminator? StabClause (terminator StabClause)* "end"
+}
+
+@skip { token_1 | token_2 | Comment | newlineBeforeComment | newlineBeforeBinaryOperator }
+
+@external tokens token from "./tokens" { quotedContentISingle, quotedContentIDouble, quotedContentIHeredocSingle, quotedContentIHeredocDouble, quotedContentIParenthesis, quotedContentICurly, quotedContentISquare, quotedContentIAngle, quotedContentIBar, quotedContentISlash, quotedContentSingle, quotedContentDouble, quotedContentHeredocSingle, quotedContentHeredocDouble, quotedContentParenthesis, quotedContentCurly, quotedContentSquare, quotedContentAngle, quotedContentBar, quotedContentSlash, newlineBeforeDo, newlineBeforeBinaryOperator, newlineBeforeComment, beforeUnaryOp, notIn, quotedAtomStart }
+
+@tokens {
+  token_1 {
+    "\\r"? "\\n"
+  }
+  token_2 {
+    $[ \t] | "\\r"? "\\n" | "\\\\" "\\r"? "\\n"
+  }
+  terminator /* precedence: right 0 */ {
+    "\\r"? "\\n"* ";" | "\\r"? "\\n"+
+  }
+  Identifier {
+    $[_\p{Ll}\p{Lm}\p{Lo}\p{Nl}\u1885\u1886\u2118\u212E\u309B\u309C] $[\p{ID_Continue}]* $[?!]? | "..."
+  }
+  Alias {
+    $[A-Z] $[_a-zA-Z0-9]* ($[ \t\r\n]* "\\." $[ \t\r\n]* $[A-Z] $[_a-zA-Z0-9]*)*
+  }
+  Integer {
+    $[0-9]+ ("_" $[0-9]+)* | "0b" $[0-1]+ ("_" $[0-1]+)* | "0o" $[0-7]+ ("_" $[0-7]+)* | "0x" $[0-9a-fA-F]+ ("_" $[0-9a-fA-F]+)*
+  }
+  Float {
+    $[0-9]+ ("_" $[0-9]+)* "." $[0-9]+ ("_" $[0-9]+)* ($[eE] ("-" | "+")? ($[0-9]+ ("_" $[0-9]+)* | "0b" $[0-1]+ ("_" $[0-1]+)* | "0o" $[0-7]+ ("_" $[0-7]+)* | "0x" $[0-9a-fA-F]+ ("_" $[0-9a-fA-F]+)*))?
+  }
+  Char {
+    "\\?" (![\n] | "\\\\" ![\n])
+  }
+  Boolean {
+    "true" | "false"
+  }
+  Nil {
+    "nil"
+  }
+  Atom {
+    ":" ($[\p{ID_Start}_] $[\p{ID_Continue}@]* $[?!]? | "->" | "::" | "|" | "&" | "=" | "^^^" | "//" | ".." | "**" | "." | "@" | "<-" | "\\\\" | "||" | "|||" | "&&" | "&&&" | "==" | "!=" | "=~" | "===" | "!==" | "<" | ">" | "<=" | ">=" | "|>" | "<<<" | ">>>" | "<<~" | "~>>" | "<~" | "~>" | "<~>" | "<|>" | "++" | "--" | "+++" | "---" | "<>" | "+" | "-" | "*" | "/" | "+" | "-" | "!" | "^" | "~~~" | "..." | "%{}" | "{}" | "%" | "<<>>" | "..//")
+  }
+  EscapeSequence {
+    "\\" (![ux] | "x" $[0-9a-fA-F] $[0-9a-fA-F]?  | "x{" $[0-9a-fA-F]+ "}" | "u{" $[0-9a-fA-F]+ "}" | "u" $[0-9a-fA-F] $[0-9a-fA-F] $[0-9a-fA-F] $[0-9a-fA-F] )
+  }
+  SigilName {
+    $[A-Z]+
+  }
+  SigilModifiers {
+    $[a-zA-Z0-9]+
+  }
+  Keyword {
+    ($[\p{ID_Start}_] $[\p{ID_Continue}@]* $[?!]? | "->" | "|" | "&" | "=" | "^^^" | "//" | ".." | "**" | "." | "@" | "<-" | "\\\\" | "||" | "|||" | "&&" | "&&&" | "==" | "!=" | "=~" | "===" | "!==" | "<" | ">" | "<=" | ">=" | "|>" | "<<<" | ">>>" | "<<~" | "~>>" | "<~" | "~>" | "<~>" | "<|>" | "++" | "--" | "+++" | "---" | "<>" | "+" | "-" | "*" | "/" | "+" | "-" | "!" | "^" | "~~~" | "..." | "%{}" | "{}" | "%" | "<<>>" | "..//") ":" $[ \t\r\n]
+  }
+  token_3 {
+    ":" $[ \t\r\n]
+  }
+  Comment /* precedence: -1 */ {
+    "#" ![\n]*
+  }
+}
